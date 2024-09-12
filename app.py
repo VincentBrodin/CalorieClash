@@ -1,11 +1,14 @@
 from flask import Flask, flash, redirect, render_template, request, session
 from flask_session import Session
-from helper import process_data, apology, fetch_barcode, fix_time
-from helper import login_required, insert_product, insert_search, validate_data
-from helper import insert_settings, sort_by_search_time, insert_user_product
 from werkzeug.security import check_password_hash, generate_password_hash
 from cs50 import SQL
 import pytz
+
+from helper import (
+    process_data, apology, fetch_barcode, fix_time,
+    login_required, insert_product, insert_search, validate_data,
+    insert_settings, sort_by_search_time, insert_user_product
+)
 
 app = Flask(__name__)
 
