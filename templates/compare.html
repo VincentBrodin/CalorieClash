@@ -1,0 +1,187 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Compare
+{% endblock %}
+
+{% block main %}
+    <div class="container mt-5">
+        <!-- Data A -->
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h4>
+                    <a href="/search_barcode?barcode={{ data_a.id }}">
+                        {{ data_a.name }}
+                    </a>
+                    (Grade: {{ data_a.grade }}) 
+                    <span class="text-secondary">
+                       - {{ data_a.id }}
+                    </span>
+                </h4>
+                <form action="/save" method="post">
+                    <input name="id" type="text" class="d-none" value="{{data_a.id}}" readonly></input>
+                    <button type="submit" class="btn btn-success">Save</button>
+                </form>
+            </div>
+            <div class="card-body">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Nutrient</th>
+                            <th>Per 100g</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Calories (kcal)</td>
+                            <td class="
+                                {% if data_a.kcal_100g < data_b.kcal_100g %}text-success
+                                {% elif data_a.kcal_100g > data_b.kcal_100g %}text-danger{% endif %}">
+                                {{ data_a.kcal_100g }} 
+                                (± {{(data_a.kcal_100g - data_b.kcal_100g)|abs}})
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Fat</td>
+                            <td class="
+                                {% if data_a.fat_100g < data_b.fat_100g %}text-success
+                                {% elif data_a.fat_100g > data_b.fat_100g %}text-danger{% endif %}">
+                                {{ data_a.fat_100g }}g
+                                (± {{ (data_a.fat_100g - data_b.fat_100g)|abs}})
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Proteins</td>
+                            <td class="
+                                {% if data_a.proteins_100g > data_b.proteins_100g %}text-success
+                                {% elif data_a.proteins_100g < data_b.proteins_100g %}text-danger{% endif %}">
+                                {{ data_a.proteins_100g }}g
+                                (± {{ (data_a.proteins_100g - data_b.proteins_100g)|abs}})
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Salt</td>
+                            <td class="
+                                {% if data_a.salt_100g < data_b.salt_100g %}text-success
+                                {% elif data_a.salt_100g > data_b.salt_100g %}text-danger{% endif %}">
+                                {{ data_a.salt_100g }}g
+                                (± {{ (data_a.salt_100g - data_b.salt_100g)|abs}})
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Sodium</td>
+                            <td class="
+                                {% if data_a.sodium_100g < data_b.sodium_100g %}text-success
+                                {% elif data_a.sodium_100g > data_b.sodium_100g %}text-danger{% endif %}">
+                                {{ data_a.sodium_100g }}g
+                                (± {{ (data_a.sodium_100g - data_b.sodium_100g)|abs}})
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Sugars</td>
+                            <td class="
+                                {% if data_a.sugars_100g < data_b.sugars_100g %}text-success
+                                {% elif data_a.sugars_100g > data_b.sugars_100g %}text-danger{% endif %}">
+                                {{ data_a.sugars_100g }}g
+                                (± {{ (data_a.sugars_100g - data_b.sugars_100g)|abs}})
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Data B -->
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h4 class="d-inline">
+                    <a href="/search_barcode?barcode={{ data_b.id }}">
+                        {{ data_b.name }}
+                    </a>
+                    (Grade: {{ data_b.grade }}) 
+                    <span class="text-secondary">
+                       - {{ data_b.id }}
+                    </span>
+                </h4>            
+                <form action="/save" method="post">
+                    <input name="id" type="text" class="d-none" value="{{data_b.id}}" readonly></input>
+                    <button type="submit" class="btn btn-success">Save</button>
+                </form>
+            </div>
+            <div class="card-body">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Nutrient</th>
+                            <th>Per 100g</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Calories (kcal)</td>
+                            <td class="
+                                {% if data_b.kcal_100g < data_a.kcal_100g %}text-success
+                                {% elif data_b.kcal_100g > data_a.kcal_100g %}text-danger{% endif %}">
+                                {{ data_b.kcal_100g }}
+                                (± {{ (data_a.kcal_100g - data_b.kcal_100g)|abs}})
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Fat</td>
+                            <td class="
+                                {% if data_b.fat_100g < data_a.fat_100g %}text-success
+                                {% elif data_b.fat_100g > data_a.fat_100g %}text-danger{% endif %}">
+                                {{ data_b.fat_100g }}g
+                                (± {{ data_a.fat_100g - data_b.fat_100g}})
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Proteins</td>
+                            <td class="
+                                {% if data_b.proteins_100g > data_a.proteins_100g %}text-success
+                                {% elif data_b.proteins_100g < data_a.proteins_100g %}text-danger{% endif %}">
+                                {{ data_b.proteins_100g }}g
+                                (± {{ (data_a.proteins_100g - data_b.proteins_100g)|abs}})
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Salt</td>
+                            <td class="
+                                {% if data_b.salt_100g < data_a.salt_100g %}text-success
+                                {% elif data_b.salt_100g > data_a.salt_100g %}text-danger{% endif %}">
+                                {{ data_b.salt_100g }}g
+                                (± {{ (data_a.salt_100g - data_b.salt_100g)|abs}})
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Sodium</td>
+                            <td class="
+                                {% if data_b.sodium_100g < data_a.sodium_100g %}text-success
+                                {% elif data_b.sodium_100g > data_a.sodium_100g %}text-danger{% endif %}">
+                                {{ data_b.sodium_100g }}g
+                                (± {{ (data_a.sodium_100g - data_b.sodium_100g)|abs}})
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Sugars</td>
+                            <td class="
+                                {% if data_b.sugars_100g < data_a.sugars_100g %}text-success
+                                {% elif data_b.sugars_100g > data_a.sugars_100g %}text-danger{% endif %}">
+                                {{ data_b.sugars_100g }}g
+                                (± {{ (data_a.sugars_100g - data_b.sugars_100g)|abs}})
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="d-flex justify-content-center mt-2">
+            <form action="/" method="get">
+                <button type="submit" class="btn btn-success">Home</button>
+            </form>
+        </div>
+
+    </div>
+{% endblock %}
+

@@ -1,0 +1,38 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Compare
+{% endblock %}
+
+{% block main %}
+    <datalist id="saved">
+        {% for save in saved %}
+        <option value="{{save.id}}">{{save.name}}</option>
+        {% endfor %}
+    </datalist>
+<div class="container d-flex flex-column justify-content-center align-items-center mt-5">
+    <!--Search Products-->
+    <h2 class="mb-4 text-center">Find Product</h2>
+    <form action="/search_barcode" method="get" class="w-100" style="max-width: 500px;">
+        <div class="form-group mb-3">
+            <label for="barcode" class="form-label">Barcode:</label>
+            <input type="text" list="saved" name="barcode" class="form-control" required placeholder="Barcode" autofocus autocomplete="off">
+        </div>
+        <button type="submit" class="btn btn-success btn-block">Search</button>
+    </form>
+    <!--Compare Products-->
+    <h2 class="mb-4 text-center">Compare Products</h2>
+    <form action="/compare_products" method="get" class="w-100" style="max-width: 500px;">
+        <div class="form-group mb-3">
+            <label for="barcode_a" class="form-label">Barcode A:</label>
+            <input type="text" list="saved" id="barcode_a" name="barcode_a" required class="form-control" placeholder="Enter Barcode A" autofocus autocomplete="off">
+        </div>
+        <div class="form-group mb-3">
+            <label for="barcode_b" class="form-label">Barcode B:</label>
+            <input type="text" list="saved" id="barcode_b" name="barcode_b" required class="form-control" placeholder="Enter Barcode B" autofocus autocomplete="off">
+        </div>
+        <button type="submit" class="btn btn-success btn-block">Search</button>
+    </form>
+</div>
+{% endblock %}
+

@@ -1,0 +1,44 @@
+
+{% extends "layout.html" %}
+
+{% block title %}
+    Profile
+{% endblock %}
+
+{% block main %}
+<div class="container d-flex flex-column justify-content-center align-items-center mt-5">
+    <h2 class="mb-4 text-center">{{ user.username }}</h2>
+    <form action="/profile" method="post" class="w-100" style="max-width: 400px;">
+        <div class="mb-3">
+            <label for="username" class="form-label">Change username:</label>
+            <input type="text" name="username" id="username" class="form-control" required 
+                placeholder="Enter Username" value="{{ user.username }}" autocomplete="username">
+        </div>
+        <div class="mb-3 form-check">
+            <input type="checkbox" name="darkmode" id="darkmode" class="form-check-input"
+                {% if settings.darkmode == "on" %}
+                    checked
+                {% endif %}
+            >
+            <label for="darkmode" class="form-check-label">Dark mode</label>
+        </div>
+        <div class="mb-3">
+            <label for="timezone" class="form-label">Timezone:</label>
+                <select name="timezone" id="timezone" class="form-select">
+                    <option value="" disabled>--Please choose an option--</option>
+                {% for timezone in timezones %}
+                    <option value="{{ timezone }}"
+                        {% if timezone == settings.timezone %}
+                            selected
+                        {% endif %}
+                    >
+                        {{ timezone }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+        <button type="submit" class="btn btn-success w-100">Save</button>
+    </form>
+</div>
+{% endblock %}
+

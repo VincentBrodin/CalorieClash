@@ -1,0 +1,39 @@
+{% extends "layout.html" %}
+
+{% block title %}
+Products
+{% endblock %}
+
+{% block main %}
+<div class="container mt-5">
+    <h2 class="mb-4">Products</h2>
+    <div class="row">
+        {% if products %}
+        {% for item in products %}
+        <div class="col-md-4 mb-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">
+                        <a href="/search_barcode?barcode={{ item.id }}" class="text-decoration-none">
+                            {{ item.name }}
+                        </a>
+                    </h5>
+                    <h6 class="card-subtitle mb-2 text-muted">Grade: {{ item.grade | upper }}</h6>
+                    <ul class="list-unstyled">
+                        <li><strong>Calories (100g):</strong> {{ item.kcal_100g }} kcal</li>
+                        <li><strong>Fat (100g):</strong> {{ item.fat_100g }} g</li>
+                        <li><strong>Proteins (100g):</strong> {{ item.proteins_100g }} g</li>
+                        <li><strong>Sugars (100g):</strong> {{ item.sugars_100g }} g</li>
+                        <li><strong>Salt (100g):</strong> {{ item.salt_100g }} g</li>
+                        <li><strong>Sodium (100g):</strong> {{ item.sodium_100g }} g</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+        {% else %}
+        <p>No products available.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

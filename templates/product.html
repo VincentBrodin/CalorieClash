@@ -1,0 +1,67 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Product Details
+{% endblock %}
+
+{% block main %}
+    <div class="container mt-5">
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h4>
+                    {{ data.name }} 
+                    (Grade: {{ data.grade }})
+                    <span class="text-secondary">
+                        - {{ data.id }}
+                    </span>
+                </h4>
+                <form action="/save" method="post">
+                    <input name="id" type="text" class="d-none" value="{{ data.id }}" readonly></input>
+                    <button type="submit" class="btn btn-success">Save</button>
+                </form>
+            </div>
+            <div class="card-body">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Nutrient</th>
+                            <th>Per 100g</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Calories (kcal)</td>
+                            <td>{{ data.kcal_100g }}</td>
+                        </tr>
+                        <tr>
+                            <td>Fat</td>
+                            <td>{{ data.fat_100g }}g</td>
+                        </tr>
+                        <tr>
+                            <td>Proteins</td>
+                            <td>{{ data.proteins_100g }}g</td>
+                        </tr>
+                        <tr>
+                            <td>Salt</td>
+                            <td>{{ data.salt_100g }}g</td>
+                        </tr>
+                        <tr>
+                            <td>Sodium</td>
+                            <td>{{ data.sodium_100g }}g</td>
+                        </tr>
+                        <tr>
+                            <td>Sugars</td>
+                            <td>{{ data.sugars_100g }}g</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="d-flex justify-content-center mt-2">
+            <form action="/" method="get">
+                <button type="submit" class="btn btn-success">Home</button>
+            </form>
+        </div>
+    </div>
+{% endblock %}
