@@ -39,9 +39,9 @@ def after_request(response):
 def index():
     update_settings()
     saved = []
+    # Grab all users saved products to show as autocomplete
     if session.get("user_id"):
         saved = db.execute("SELECT * FROM user_products, products WHERE user_id = ? AND product_id = id", session["user_id"])
-    # saved = db.execute("SELECT * FROM products")
     return render_template("index.html", saved=saved)
 
 
@@ -53,6 +53,7 @@ def search_barcode():
     # Check barcode exits in db
     rows = db.execute("SELECT * FROM products WHERE id = ?", barcode)
     if len(rows) == 0:
+        # Barcode did not exist grab it and add to local db
         print(f"Searching for {barcode} online")
         response = fetch_barcode(barcode)
         if response.status_code != 200:
@@ -62,6 +63,7 @@ def search_barcode():
             return apology("Product is missing data", 404)
         insert_product(db, data)
     else:
+        # barcode exits
         print(f"Found {barcode} localy")
     rows = db.execute("SELECT * FROM products WHERE id = ?", barcode)
     data = rows[0]
@@ -78,12 +80,15 @@ def search_barcode():
 
 @app.route("/compare_products", methods=["GET"])
 def compare_products():
+    # TODO: Clean up this mess
+    # ---Barcode a---
     barcode_a = request.args.get("barcode_a")
     if not barcode_a:
         return apology("Missing barcode a", 403)
     # Check barcode_a exits in db
     rows_a = db.execute("SELECT * FROM products WHERE id = ?", barcode_a)
     if len(rows_a) == 0:
+        # Barcode did not exist grab it and add to local db
         print(f"Searching for {barcode_a} online")
         response_a = fetch_barcode(barcode_a)
         if response_a.status_code != 200:
@@ -97,12 +102,14 @@ def compare_products():
     rows_a = db.execute("SELECT * FROM products WHERE id = ?", barcode_a)
     data_a = rows_a[0]
 
+    # ---Barcode b---
     barcode_b = request.args.get("barcode_b")
     if not barcode_b:
         return apology("Missing barcode b", 403)
     # Check barcode_b exits in db
     rows_b = db.execute("SELECT * FROM products WHERE id = ?", barcode_b)
     if len(rows_b) == 0:
+        # Barcode did not exist grab it and add to local db
         print(f"Searching for {barcode_a} online")
         response_b = fetch_barcode(barcode_b)
         if response_b.status_code != 200:
@@ -115,6 +122,8 @@ def compare_products():
         print(f"Found {barcode_a} localy")
     rows_b = db.execute("SELECT * FROM products WHERE id = ?", barcode_b)
     data_b = rows_b[0]
+
+    # ---return information---
     update_settings()
     return render_template("compare.html", data_a=data_a, data_b=data_b)
 
@@ -178,7 +187,6 @@ def remove():
 def saved():
     saved = db.execute("SELECT * FROM user_products, products WHERE products.id = product_id AND user_id = ?", session["user_id"])
     return render_template("saved.html", saved=saved)
-
 
 
 @app.route("/profile", methods=["GET", "POST"])
