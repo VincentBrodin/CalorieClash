@@ -50,6 +50,7 @@ def search_barcode():
     barcode = request.args.get("barcode")
     if not barcode:
         return apology("Missing barcode", 403)
+
     # Check barcode exits in db
     rows = db.execute("SELECT * FROM products WHERE id = ?", barcode)
     if len(rows) == 0:
@@ -125,7 +126,24 @@ def compare_products():
 
     # ---return information---
     update_settings()
+    data_a = get_barcode_data(barcode_a)
+    # if type
     return render_template("compare.html", data_a=data_a, data_b=data_b)
+
+
+def get_barcode_data(barcode):
+    rows = db.execute("SELECT * FROM products WHERE id = ?", barcode)
+    if len(rows) == 0:
+        response = fetch_barcode(barcode)
+        if response.status_code != 200:
+            return apology("Could not find product", 404)
+        data = process_data(response.json())
+        if not validate_data(data):
+            return apology("Product is missing data", 404)
+        insert_product(db, data)
+        rows = db.execute("SELECT * FROM products WHERE id = ?", barcode)
+    data = rows[0]
+    return data
 
 
 @app.route("/history", methods=["GET"])

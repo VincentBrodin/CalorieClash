@@ -39,6 +39,15 @@ def process_data(json):
 
 
 def validate_data(data):
+    if not data.get("name"):
+        return False
+    print(data.get("name"))
+    print("Validating data")
+    if not data.get("id"):
+        return False
+    if not data.get("grade"):
+        return False
+
     for i in data:
         if not data[i]:
             print(f"Missing: {i}")
