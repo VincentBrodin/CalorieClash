@@ -1,14 +1,20 @@
 {% extends "layout.html" %}
 
 {% block title %}
-    Login
+    Shopping lists
+{% endblock %}
+
+{% block head %}
+    <script src="static/lists.js"></script>
 {% endblock %}
 
 {% block main %}
 <div class="container mt-5">
     <div class="d-flex justify-content-between align-items-center">
         <h2 class="mb-4">Shopping Lists</h2>
-        <button class="btn btn-success h-25" id="add-new" type="button">Add new</button>
+        <form action="/add_new_list" method="POST">
+            <button class="btn btn-success h-25" id="add-new" type="submit">Add new</button>
+        </form>
     </div>
     <div class="row">
         {% if saved %}

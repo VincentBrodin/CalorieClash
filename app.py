@@ -149,6 +149,13 @@ def shopping_lists():
     return render_template("lists.html", saved=saved)
 
 
+@app.route("/add_new_list", methods=["POST"])
+@login_required
+def new_shopping_list():
+    # TODO: Add a new list to the db and redirect user to the new list
+    return "NEW LIST"
+
+
 def get_barcode_data(barcode):
     rows = db.execute("SELECT * FROM products WHERE id = ?", barcode)
     if len(rows) == 0:
