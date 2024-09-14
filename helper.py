@@ -71,6 +71,11 @@ def insert_user_product(db, user_id, product_id):
     db.execute("INSERT INTO user_products (user_id, product_id) VALUES (?, ?)", user_id, product_id)
 
 
+def insert_new_list(db, user_id):
+    list_id = db.execute("INSERT INTO shopping_lists (user_id) VALUES (?)", user_id)
+    return list_id
+
+
 def fetch_barcode(barcode):
     return requests.get(get_product_url_barcode(barcode))
 

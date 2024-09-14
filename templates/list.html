@@ -1,0 +1,61 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    {{ shopping_list.name }}
+{% endblock %}
+
+{% block head %}
+    <script src="static/lists.js"></script>
+{% endblock %}
+
+{% block main %}
+<div class="container mt-5">
+    
+    <!-- List Name Update Form -->
+    <div class="mb-4">
+        <form class="row g-2" method="post" action="/update_list_name">
+            <input type="hidden" name="id" readonly value="{{shopping_list.id}}">
+            <div class="col-auto flex-grow-1">
+                <input type="text" autocomplete="off" name="name" id="name_field" class="form-control" value="{{ shopping_list.name }}" placeholder="Enter name">
+            </div>
+            <div class="col-auto">
+                <button class="btn btn-success h-100" type="submit" id="save_name">Update</button>
+            </div>
+        </form>
+    </div>
+    
+    <!-- Product List -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h5 class="mb-3">Products</h5>
+            <ul class="list-group shadow-sm">
+                {% for product in products %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        {{ product.name }}
+                        <button class="btn btn-danger btn-sm">Remove</button>
+                    </li>
+                {% else %}
+                    <li class="list-group-item text-center text-muted">No products added yet.</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+
+    <!-- Add New Product Form -->
+    <div class="row">
+        <div class="col-12">
+            <form class="row g-2" method="POST" action="/add-product">
+                <div class="col-auto flex-grow-1">
+                    <input type="text" autocomplete="off" id="new-product" class="form-control" placeholder="Add new product" name="product_name">
+                </div>
+                <div class="col-auto">
+                    <button class="btn btn-success h-100" type="submit">Add Product</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+
+

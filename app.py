@@ -7,7 +7,8 @@ import pytz
 from helper import (
     process_data, apology, fetch_barcode, fix_time,
     login_required, insert_product, insert_search, validate_data,
-    insert_settings, sort_by_search_time, insert_user_product
+    insert_settings, sort_by_search_time, insert_user_product,
+    insert_new_list
 )
 
 app = Flask(__name__)
@@ -145,15 +146,79 @@ def compare_products():
 @app.route("/lists")
 @login_required
 def shopping_lists():
-    saved = db.execute("SELECT * FROM user_products, products WHERE products.id = product_id AND user_id = ?", session["user_id"])
-    return render_template("lists.html", saved=saved)
+    lists = db.execute("SELECT * FROM shopping_lists WHERE user_id = ?", session["user_id"])
+    return render_template("lists.html", lists=lists)
+
+
+@app.route("/list", methods=["GET"])
+def shopping_list():
+    list_id = request.args.get("id")
+    if not list_id:
+        return apology("Missing list id", 400)
+    rows = db.execute("SELECT * FROM shopping_lists WHERE id = ?", list_id)
+    if len(rows) == 0:
+        return apology("Shopping list does not exist", 404)
+    shopping_list = rows[0]
+    products = db.execute("SELECT * FROM shopping_list_items, products WHERE shopping_list_items.product_id = products.id AND shopping_list_id = ?", list_id)
+    return render_template("list.html", shopping_list=shopping_list, products=products)
+
+
+@app.route("/remove_list", methods=["POST"])
+@login_required
+def remove_list():
+    list_id = request.form.get("id")
+    if not list_id:
+        return apology("Missing list id", 400)
+    rows = db.execute("SELECT * FROM shopping_lists WHERE id = ?", list_id)
+    if len(rows) == 0:
+        return apology("Shopping list does not exist", 404)
+    shopping_list = rows[0]
+
+    if shopping_list["user_id"] != session["user_id"]:
+        return apology("You don't own this list", 403)
+
+    db.execute("DELETE FROM shopping_lists WHERE id = ?", list_id)
+
+    flash("Removed!")
+    return redirect("/lists")
 
 
 @app.route("/add_new_list", methods=["POST"])
 @login_required
 def new_shopping_list():
     # TODO: Add a new list to the db and redirect user to the new list
-    return "NEW LIST"
+    list_id = insert_new_list(db, session["user_id"])
+    return redirect(f"/list?id={list_id}")
+
+
+@app.route("/update_list_name", methods=["POST"])
+@login_required
+def update_list_name():
+    list_id = request.form.get("id")
+    new_list_name = request.form.get("name")
+
+    if not list_id:
+        return apology("Missing list id", 400)
+
+    if not new_list_name:
+        return apology("Missing new list name", 400)
+
+    rows = db.execute("SELECT * FROM shopping_lists WHERE id = ?", list_id)
+
+    if len(rows) == 0:
+        return apology("List does not exsits", 404)
+
+    shopping_list = rows[0]
+
+    if shopping_list["user_id"] != session["user_id"]:
+        return apology("You don't own this list", 400)
+
+    db.execute("UPDATE shopping_lists SET name = ? WHERE id = ?", new_list_name, list_id)
+
+    flash("Name updated")
+    return redirect(f"/list?id={list_id}")
+
+
 
 
 def get_barcode_data(barcode):
