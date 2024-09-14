@@ -69,14 +69,17 @@ def search_barcode():
     rows = db.execute("SELECT * FROM products WHERE id = ?", barcode)
     data = rows[0]
 
+    is_saved = False
     # Add search to history
     if session.get("user_id"):
         insert_search(db, session["user_id"], barcode)
+        saved = db.execute("SELECT * FROM user_products WHERE user_id = ? AND product_id = ?", session["user_id"], barcode)
+        is_saved = len(saved) != 0
         print("User id found :)")
     else:
         print("No user id")
     update_settings()
-    return render_template("product.html", data=data)
+    return render_template("product.html", data=data, is_saved=is_saved)
 
 
 @app.route("/compare_products", methods=["GET"])
@@ -102,6 +105,10 @@ def compare_products():
         print(f"Found {barcode_a} localy")
     rows_a = db.execute("SELECT * FROM products WHERE id = ?", barcode_a)
     data_a = rows_a[0]
+    is_saved_a = False
+    if session.get("user_id"):
+        saved = db.execute("SELECT * FROM user_products WHERE user_id = ? AND product_id = ?", session["user_id"], barcode_a)
+        is_saved_a = len(saved) != 0
 
     # ---Barcode b---
     barcode_b = request.args.get("barcode_b")
@@ -123,12 +130,23 @@ def compare_products():
         print(f"Found {barcode_a} localy")
     rows_b = db.execute("SELECT * FROM products WHERE id = ?", barcode_b)
     data_b = rows_b[0]
+    is_saved_b = False
+    if session.get("user_id"):
+        saved = db.execute("SELECT * FROM user_products WHERE user_id = ? AND product_id = ?", session["user_id"], barcode_b)
+        is_saved_b = len(saved) != 0
 
     # ---return information---
     update_settings()
     data_a = get_barcode_data(barcode_a)
     # if type
-    return render_template("compare.html", data_a=data_a, data_b=data_b)
+    return render_template("compare.html", data_a=data_a, is_saved_a=is_saved_a, data_b=data_b, is_saved_b=is_saved_b)
+
+
+@app.route("/lists")
+@login_required
+def shopping_lists():
+    saved = db.execute("SELECT * FROM user_products, products WHERE products.id = product_id AND user_id = ?", session["user_id"])
+    return render_template("lists.html", saved=saved)
 
 
 def get_barcode_data(barcode):

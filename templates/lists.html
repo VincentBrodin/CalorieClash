@@ -1,0 +1,47 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Login
+{% endblock %}
+
+{% block main %}
+<div class="container mt-5">
+    <div class="d-flex justify-content-between align-items-center">
+        <h2 class="mb-4">Shopping Lists</h2>
+        <button class="btn btn-success h-25" id="add-new" type="button">Add new</button>
+    </div>
+    <div class="row">
+        {% if saved %}
+        {% for item in saved %}
+        <div class="col-md-4 mb-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">
+                        <a href="/search_barcode?barcode={{ item.product_id }}" class="text-decoration-none">
+                            {{ item.name }}
+                        </a>
+                    </h5>
+                    <h6 class="card-subtitle mb-2 text-muted">Grade: {{ item.grade | upper }}</h6>
+                    <ul class="list-unstyled">
+                        <li><strong>Calories (100g):</strong> {{ item.kcal_100g }} kcal</li>
+                        <li><strong>Fat (100g):</strong> {{ item.fat_100g }} g</li>
+                        <li><strong>Proteins (100g):</strong> {{ item.proteins_100g }} g</li>
+                        <li><strong>Sugars (100g):</strong> {{ item.sugars_100g }} g</li>
+                        <li><strong>Salt (100g):</strong> {{ item.salt_100g }} g</li>
+                        <li><strong>Sodium (100g):</strong> {{ item.sodium_100g }} g</li>
+                    </ul>
+                    <form action="/remove" method="post" style="display:inline;">
+                        <input type="text" class="d-none" name="id" readonly value="{{ item.id }}">
+                        <button type="submit" class="btn btn-danger btn-sm">Remove</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+        {% else %}
+        <p>You have no shopping lists</p>
+        {% endif %}
+    </div>
+</div>
+
+{% endblock %}

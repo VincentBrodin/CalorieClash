@@ -15,10 +15,17 @@
                         - {{ data.id }}
                     </span>
                 </h4>
+                {% if is_saved %}
+                <form action="/remove" method="post">
+                    <input name="id" type="text" class="d-none" value="{{ data.id }}" readonly></input>
+                    <button type="submit" class="btn btn-danger">Remove</button>
+                </form>
+                {% else %}
                 <form action="/save" method="post">
                     <input name="id" type="text" class="d-none" value="{{ data.id }}" readonly></input>
                     <button type="submit" class="btn btn-success">Save</button>
                 </form>
+                {% endif %}
             </div>
             <div class="card-body">
                 <table class="table table-striped">
