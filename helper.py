@@ -3,13 +3,64 @@ import requests
 from functools import wraps
 import datetime
 import pytz
+from cs50 import SQL
 
 BASE_API_URL = "https://world.openfoodfacts.net/api/v3/"
 ENDING_API_URL = "?fields=product_name,nutriscore_data,nutriments,nutrition_grades,nutriscore_score"
 
+db = SQL("sqlite:///data.db")
+
+
+class ErrorResponse:
+    def __init__(self, status=None, message=None):
+        self.status = status
+        self.message = message
+
+
+class BarcodeRequest:
+    def __init__(self):
+        self.data = {}
+        self.has_error = False
+        self.error = ErrorResponse()
+
 
 def get_product_url_barcode(barcode):
     return BASE_API_URL + "product/" + barcode + ENDING_API_URL
+
+
+def get_product(barcode):
+    product = BarcodeRequest()
+    rows = db.execute("SELECT * FROM products WHERE id = ?", barcode)
+    if len(rows) == 0:
+        # Barcode did not exist grab it and add to local db
+        print(f"Searching for {barcode} online")
+        response = fetch_barcode(barcode)
+
+        if response.status_code != 200:
+            product.has_error = True
+            product.error.status = response.status_code
+            product.error.message = "Could not find product"
+            return product
+        data = process_data(response.json())
+
+        if not validate_data(data):
+            product.has_error = True
+            product.error.status = 404
+            product.error.message = "Product is missing data"
+            return product
+
+        insert_product(db, data)
+    else:
+        # barcode exits
+        print(f"Found {barcode} localy")
+    rows = db.execute("SELECT * FROM products WHERE id = ?", barcode)
+    if len(rows) > 0:
+        product.data = rows[0]
+    else:
+        product.has_error = True
+        product.error.status = 404
+        product.error.message = "Product not found in local database after insert."
+    return product
 
 
 def get_product_url_name(name):
@@ -87,6 +138,11 @@ def fetch_name(name):
 def apology(message, status_code):
     return render_template("error.html", top=status_code,
                            bottom=escape(message)), status_code
+
+
+def apology_error(error):
+    return render_template("error.html", top=error.status,
+                           bottom=escape(error.message)), error.status
 
 
 def fix_time(time_stamp, time_zone):

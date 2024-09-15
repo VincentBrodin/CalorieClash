@@ -5,10 +5,9 @@ from cs50 import SQL
 import pytz
 
 from helper import (
-    process_data, apology, fetch_barcode, fix_time,
-    login_required, insert_product, insert_search, validate_data,
-    insert_settings, sort_by_search_time, insert_user_product,
-    insert_new_list
+    apology, fix_time, login_required, insert_search, insert_settings,
+    sort_by_search_time, insert_user_product, insert_new_list, get_product,
+    apology_error
 )
 
 app = Flask(__name__)
@@ -52,23 +51,10 @@ def search_barcode():
     if not barcode:
         return apology("Missing barcode", 403)
 
-    # Check barcode exits in db
-    rows = db.execute("SELECT * FROM products WHERE id = ?", barcode)
-    if len(rows) == 0:
-        # Barcode did not exist grab it and add to local db
-        print(f"Searching for {barcode} online")
-        response = fetch_barcode(barcode)
-        if response.status_code != 200:
-            return apology("Could not find product", response.status_code)
-        data = process_data(response.json())
-        if not validate_data(data):
-            return apology("Product is missing data", 404)
-        insert_product(db, data)
-    else:
-        # barcode exits
-        print(f"Found {barcode} localy")
-    rows = db.execute("SELECT * FROM products WHERE id = ?", barcode)
-    data = rows[0]
+    product = get_product(barcode)
+
+    if product.has_error:
+        return apology_error(product.error)
 
     is_saved = False
     # Add search to history
@@ -80,32 +66,20 @@ def search_barcode():
     else:
         print("No user id")
     update_settings()
-    return render_template("product.html", data=data, is_saved=is_saved)
+    return render_template("product.html", data=product.data, is_saved=is_saved)
 
 
 @app.route("/compare_products", methods=["GET"])
 def compare_products():
-    # TODO: Clean up this mess
     # ---Barcode a---
     barcode_a = request.args.get("barcode_a")
     if not barcode_a:
         return apology("Missing barcode a", 403)
-    # Check barcode_a exits in db
-    rows_a = db.execute("SELECT * FROM products WHERE id = ?", barcode_a)
-    if len(rows_a) == 0:
-        # Barcode did not exist grab it and add to local db
-        print(f"Searching for {barcode_a} online")
-        response_a = fetch_barcode(barcode_a)
-        if response_a.status_code != 200:
-            return apology("Could not find product", response_a.status_code)
-        data_a = process_data(response_a.json())
-        if not validate_data(data_a):
-            return apology("Product is missing data", 404)
-        insert_product(db, data_a)
-    else:
-        print(f"Found {barcode_a} localy")
-    rows_a = db.execute("SELECT * FROM products WHERE id = ?", barcode_a)
-    data_a = rows_a[0]
+
+    product_a = get_product(barcode_a)
+    if product_a.has_error:
+        return apology_error(product_a.error)
+
     is_saved_a = False
     if session.get("user_id"):
         saved = db.execute("SELECT * FROM user_products WHERE user_id = ? AND product_id = ?", session["user_id"], barcode_a)
@@ -115,22 +89,11 @@ def compare_products():
     barcode_b = request.args.get("barcode_b")
     if not barcode_b:
         return apology("Missing barcode b", 403)
-    # Check barcode_b exits in db
-    rows_b = db.execute("SELECT * FROM products WHERE id = ?", barcode_b)
-    if len(rows_b) == 0:
-        # Barcode did not exist grab it and add to local db
-        print(f"Searching for {barcode_a} online")
-        response_b = fetch_barcode(barcode_b)
-        if response_b.status_code != 200:
-            return apology("Could not find product", response_b.status_code)
-        data_b = process_data(response_b.json())
-        if not validate_data(data_a):
-            return apology("Product is missing data", 404)
-        insert_product(db, data_b)
-    else:
-        print(f"Found {barcode_a} localy")
-    rows_b = db.execute("SELECT * FROM products WHERE id = ?", barcode_b)
-    data_b = rows_b[0]
+
+    product_b = get_product(barcode_b)
+    if product_b.has_error:
+        return apology_error(product_b.error)
+
     is_saved_b = False
     if session.get("user_id"):
         saved = db.execute("SELECT * FROM user_products WHERE user_id = ? AND product_id = ?", session["user_id"], barcode_b)
@@ -138,9 +101,8 @@ def compare_products():
 
     # ---return information---
     update_settings()
-    data_a = get_barcode_data(barcode_a)
     # if type
-    return render_template("compare.html", data_a=data_a, is_saved_a=is_saved_a, data_b=data_b, is_saved_b=is_saved_b)
+    return render_template("compare.html", data_a=product_a.data, is_saved_a=is_saved_a, data_b=product_b.data, is_saved_b=is_saved_b)
 
 
 @app.route("/lists")
@@ -160,7 +122,50 @@ def shopping_list():
         return apology("Shopping list does not exist", 404)
     shopping_list = rows[0]
     products = db.execute("SELECT * FROM shopping_list_items, products WHERE shopping_list_items.product_id = products.id AND shopping_list_id = ?", list_id)
-    return render_template("list.html", shopping_list=shopping_list, products=products)
+
+    saved = []
+    if session.get("user_id"):
+        saved = db.execute("SELECT * FROM user_products, products WHERE user_id = ? AND product_id = id", session["user_id"])
+
+    return render_template("list.html", shopping_list=shopping_list, products=products, saved=saved)
+
+
+@app.route("/add_product_to_list", methods=["POST"])    # Grab all users saved products to show as autocomplete
+@login_required
+def add_product_to_list():
+    list_id = request.form.get("id")
+    barcode = request.form.get("product_id")
+
+    if not list_id:
+        return apology("Missing list id", 400)
+
+    if not barcode:
+        return apology("Missing product id", 400)
+
+    rows = db.execute("SELECT * FROM shopping_lists WHERE id = ?", list_id)
+    if len(rows) == 0:
+        return apology("Shopping list does not exist", 404)
+    shopping_list = rows[0]
+
+    if shopping_list["user_id"] != session["user_id"]:
+        return apology("You don't own this list", 403)
+
+    product = get_product(barcode)
+
+    if product.has_error:
+        return apology_error(product.error)
+
+    rows = db.execute("SELECT * FROM shopping_list_items WHERE shopping_list_id = ? AND product_id = ?", list_id, barcode)
+    if len(rows) != 0:
+        count = rows[0].get("count")
+        count += 1
+        db.execute("UPDATE shopping_list_items SET count = ? WHERE shopping_list_id = ? AND product_id = ?", count, list_id, barcode)
+    else:
+        place = len(db.execute("SELECT * FROM shopping_list_items WHERE shopping_list_id = ?", list_id))
+        db.execute("INSERT INTO shopping_list_items (shopping_list_id, product_id, count, place) VALUES (?, ?, ?, ?)", list_id, barcode, 1, place)
+
+    flash("Added!")
+    return redirect(f"/list?id={list_id}")
 
 
 @app.route("/remove_list", methods=["POST"])
@@ -176,7 +181,7 @@ def remove_list():
 
     if shopping_list["user_id"] != session["user_id"]:
         return apology("You don't own this list", 403)
-
+    db.execute("DELETE FROM shopping_list_items WHERE shopping_list_id = ?", list_id)
     db.execute("DELETE FROM shopping_lists WHERE id = ?", list_id)
 
     flash("Removed!")
@@ -217,23 +222,6 @@ def update_list_name():
 
     flash("Name updated")
     return redirect(f"/list?id={list_id}")
-
-
-
-
-def get_barcode_data(barcode):
-    rows = db.execute("SELECT * FROM products WHERE id = ?", barcode)
-    if len(rows) == 0:
-        response = fetch_barcode(barcode)
-        if response.status_code != 200:
-            return apology("Could not find product", 404)
-        data = process_data(response.json())
-        if not validate_data(data):
-            return apology("Product is missing data", 404)
-        insert_product(db, data)
-        rows = db.execute("SELECT * FROM products WHERE id = ?", barcode)
-    data = rows[0]
-    return data
 
 
 @app.route("/history", methods=["GET"])

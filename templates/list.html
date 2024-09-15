@@ -9,6 +9,11 @@
 {% endblock %}
 
 {% block main %}
+<datalist id="saved">
+    {% for save in saved %}
+    <option value="{{save.id}}">{{save.name}}</option>
+    {% endfor %}
+</datalist>
 <div class="container mt-5">
     
     <!-- List Name Update Form -->
@@ -18,7 +23,7 @@
             <div class="col-auto flex-grow-1">
                 <input type="text" autocomplete="off" name="name" id="name_field" class="form-control" value="{{ shopping_list.name }}" placeholder="Enter name">
             </div>
-            <div class="col-auto">
+    <div class="col-auto">
                 <button class="btn btn-success h-100" type="submit" id="save_name">Update</button>
             </div>
         </form>
@@ -31,7 +36,7 @@
             <ul class="list-group shadow-sm">
                 {% for product in products %}
                     <li class="list-group-item d-flex justify-content-between align-items-center">
-                        {{ product.name }}
+                        {{ product.name }} ({{product.count}})
                         <button class="btn btn-danger btn-sm">Remove</button>
                     </li>
                 {% else %}
@@ -44,9 +49,10 @@
     <!-- Add New Product Form -->
     <div class="row">
         <div class="col-12">
-            <form class="row g-2" method="POST" action="/add-product">
+            <form class="row g-2" method="POST" action="/add_product_to_list">
+            <input type="hidden" name="id" readonly value="{{shopping_list.id}}">
                 <div class="col-auto flex-grow-1">
-                    <input type="text" autocomplete="off" id="new-product" class="form-control" placeholder="Add new product" name="product_name">
+                    <input type="text" autocomplete="off" id="new-product" list="saved" class="form-control" placeholder="Add new product" name="product_id">
                 </div>
                 <div class="col-auto">
                     <button class="btn btn-success h-100" type="submit">Add Product</button>

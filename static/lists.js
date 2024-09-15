@@ -4,8 +4,6 @@ let save_name;
 let start_value = "";
 
 function main(){
-    //let button = document.getElementById("add-new");
-    //button.addEventListener("click", add_new)
     name_field = document.getElementById("name_field");
     name_field.addEventListener("input", name_field_update)
     start_value = name_field.value;
@@ -14,7 +12,9 @@ function main(){
 }
 
 function add_new(){
-    console.log("Adding new")
+    console.log(new_product_id.value);
+    new_product_id.value = "";
+    let newProduct = createElement();
 }
 
 function name_field_update(){
