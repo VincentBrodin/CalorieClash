@@ -41,8 +41,38 @@ def index():
     saved = []
     # Grab all users saved products to show as autocomplete
     if session.get("user_id"):
-        saved = db.execute("SELECT * FROM user_products, products WHERE user_id = ? AND product_id = id", session["user_id"])
+        saved = db.execute(
+            "SELECT * FROM user_products, products WHERE user_id = ? AND product_id = id", session["user_id"])
     return render_template("index.html", saved=saved)
+
+
+@app.route("/update_list_count", methods=["POST"])
+def update_list_count():
+    count = request.json.get("count", 0)
+    list_id = request.json.get("list_id")
+    product_id = request.json.get("product_id")
+
+    if not count or not list_id or not product_id:
+        return "BAD", 403
+
+    rows = db.execute("SELECT * FROM shopping_list_items WHERE shopping_list_id = ? AND product_id = ?",
+                      list_id, product_id)
+    if len(rows) == 0:
+        return "Does not exist", 404
+
+    rows = db.execute("SELECT * FROM shopping_lists WHERE user_id = ? AND id = ?",
+                      session["user_id"], list_id)
+    if len(rows) == 0:
+        return "Not your list", 403
+
+    if int(count) <= 0:
+        db.execute("DELETE FROM shopping_list_items WHERE shopping_list_id = ? AND product_id = ?",
+                   list_id, product_id)
+        return "Remove", 200
+    else:
+        db.execute("UPDATE shopping_list_items SET count = ? WHERE shopping_list_id = ? AND product_id = ?",
+               count, list_id, product_id)
+    return "Good", 200
 
 
 @app.route("/search_barcode", methods=["GET"])
@@ -60,7 +90,8 @@ def search_barcode():
     # Add search to history
     if session.get("user_id"):
         insert_search(db, session["user_id"], barcode)
-        saved = db.execute("SELECT * FROM user_products WHERE user_id = ? AND product_id = ?", session["user_id"], barcode)
+        saved = db.execute(
+            "SELECT * FROM user_products WHERE user_id = ? AND product_id = ?", session["user_id"], barcode)
         is_saved = len(saved) != 0
         print("User id found :)")
     else:
@@ -82,7 +113,8 @@ def compare_products():
 
     is_saved_a = False
     if session.get("user_id"):
-        saved = db.execute("SELECT * FROM user_products WHERE user_id = ? AND product_id = ?", session["user_id"], barcode_a)
+        saved = db.execute(
+            "SELECT * FROM user_products WHERE user_id = ? AND product_id = ?", session["user_id"], barcode_a)
         is_saved_a = len(saved) != 0
 
     # ---Barcode b---
@@ -96,7 +128,8 @@ def compare_products():
 
     is_saved_b = False
     if session.get("user_id"):
-        saved = db.execute("SELECT * FROM user_products WHERE user_id = ? AND product_id = ?", session["user_id"], barcode_b)
+        saved = db.execute(
+            "SELECT * FROM user_products WHERE user_id = ? AND product_id = ?", session["user_id"], barcode_b)
         is_saved_b = len(saved) != 0
 
     # ---return information---
@@ -108,7 +141,8 @@ def compare_products():
 @app.route("/lists")
 @login_required
 def shopping_lists():
-    lists = db.execute("SELECT * FROM shopping_lists WHERE user_id = ?", session["user_id"])
+    lists = db.execute(
+        "SELECT * FROM shopping_lists WHERE user_id = ?", session["user_id"])
     return render_template("lists.html", lists=lists)
 
 
@@ -121,16 +155,19 @@ def shopping_list():
     if len(rows) == 0:
         return apology("Shopping list does not exist", 404)
     shopping_list = rows[0]
-    products = db.execute("SELECT * FROM shopping_list_items, products WHERE shopping_list_items.product_id = products.id AND shopping_list_id = ?", list_id)
+    products = db.execute(
+        "SELECT * FROM shopping_list_items, products WHERE shopping_list_items.product_id = products.id AND shopping_list_id = ?", list_id)
 
     saved = []
     if session.get("user_id"):
-        saved = db.execute("SELECT * FROM user_products, products WHERE user_id = ? AND product_id = id", session["user_id"])
+        saved = db.execute(
+            "SELECT * FROM user_products, products WHERE user_id = ? AND product_id = id", session["user_id"])
 
     return render_template("list.html", shopping_list=shopping_list, products=products, saved=saved)
 
 
-@app.route("/add_product_to_list", methods=["POST"])    # Grab all users saved products to show as autocomplete
+# Grab all users saved products to show as autocomplete
+@app.route("/add_product_to_list", methods=["POST"])
 @login_required
 def add_product_to_list():
     list_id = request.form.get("id")
@@ -155,14 +192,18 @@ def add_product_to_list():
     if product.has_error:
         return apology_error(product.error)
 
-    rows = db.execute("SELECT * FROM shopping_list_items WHERE shopping_list_id = ? AND product_id = ?", list_id, barcode)
+    rows = db.execute(
+        "SELECT * FROM shopping_list_items WHERE shopping_list_id = ? AND product_id = ?", list_id, barcode)
     if len(rows) != 0:
         count = rows[0].get("count")
         count += 1
-        db.execute("UPDATE shopping_list_items SET count = ? WHERE shopping_list_id = ? AND product_id = ?", count, list_id, barcode)
+        db.execute("UPDATE shopping_list_items SET count = ? WHERE shopping_list_id = ? AND product_id = ?",
+                   count, list_id, barcode)
     else:
-        place = len(db.execute("SELECT * FROM shopping_list_items WHERE shopping_list_id = ?", list_id))
-        db.execute("INSERT INTO shopping_list_items (shopping_list_id, product_id, count, place) VALUES (?, ?, ?, ?)", list_id, barcode, 1, place)
+        place = len(db.execute(
+            "SELECT * FROM shopping_list_items WHERE shopping_list_id = ?", list_id))
+        db.execute("INSERT INTO shopping_list_items (shopping_list_id, product_id, count, place) VALUES (?, ?, ?, ?)",
+                   list_id, barcode, 1, place)
 
     flash("Added!")
     return redirect(f"/list?id={list_id}")
@@ -181,7 +222,8 @@ def remove_list():
 
     if shopping_list["user_id"] != session["user_id"]:
         return apology("You don't own this list", 403)
-    db.execute("DELETE FROM shopping_list_items WHERE shopping_list_id = ?", list_id)
+    db.execute(
+        "DELETE FROM shopping_list_items WHERE shopping_list_id = ?", list_id)
     db.execute("DELETE FROM shopping_lists WHERE id = ?", list_id)
 
     flash("Removed!")
@@ -218,7 +260,8 @@ def update_list_name():
     if shopping_list["user_id"] != session["user_id"]:
         return apology("You don't own this list", 400)
 
-    db.execute("UPDATE shopping_lists SET name = ? WHERE id = ?", new_list_name, list_id)
+    db.execute("UPDATE shopping_lists SET name = ? WHERE id = ?",
+               new_list_name, list_id)
 
     flash("Name updated")
     return redirect(f"/list?id={list_id}")
@@ -227,7 +270,8 @@ def update_list_name():
 @app.route("/history", methods=["GET"])
 @login_required
 def history():
-    history = db.execute("SELECT * FROM user_searches, products WHERE user_id = ? AND product_id = products.id", session["user_id"])
+    history = db.execute(
+        "SELECT * FROM user_searches, products WHERE user_id = ? AND product_id = products.id", session["user_id"])
     for i, search in enumerate(history):
         fixed_time = fix_time(search["search_time"], session["timezone"])
         history[i]["search_time"] = fixed_time
@@ -240,7 +284,8 @@ def history():
 @app.route("/clear_history")
 @login_required
 def clear_history():
-    db.execute("DELETE FROM user_searches WHERE user_id = ?", session["user_id"])
+    db.execute("DELETE FROM user_searches WHERE user_id = ?",
+               session["user_id"])
     return redirect("/history")
 
 
@@ -250,7 +295,8 @@ def save():
     product_id = request.form.get("id")
     if not product_id:
         return apology("Missing product id", 403)
-    rows = db.execute("SELECT * FROM user_products WHERE user_id = ? AND product_id = ?", session["user_id"], product_id)
+    rows = db.execute(
+        "SELECT * FROM user_products WHERE user_id = ? AND product_id = ?", session["user_id"], product_id)
     if len(rows) != 0:
         return redirect("/saved")
     insert_user_product(db, session["user_id"], product_id)
@@ -270,10 +316,12 @@ def remove():
     product_id = request.form.get("id")
     if not product_id:
         return apology("Missing product id", 403)
-    rows = db.execute("SELECT * FROM user_products WHERE user_id = ? AND product_id = ?", session["user_id"], product_id)
+    rows = db.execute(
+        "SELECT * FROM user_products WHERE user_id = ? AND product_id = ?", session["user_id"], product_id)
     if len(rows) == 0:
         return redirect("/saved")
-    db.execute("DELETE FROM user_products WHERE user_id = ? AND product_id = ?", session["user_id"], product_id)
+    db.execute("DELETE FROM user_products WHERE user_id = ? AND product_id = ?",
+               session["user_id"], product_id)
     flash("Removed!")
     return redirect("/saved")
 
@@ -281,14 +329,16 @@ def remove():
 @app.route("/saved", methods=["GET"])
 @login_required
 def saved():
-    saved = db.execute("SELECT * FROM user_products, products WHERE products.id = product_id AND user_id = ?", session["user_id"])
+    saved = db.execute(
+        "SELECT * FROM user_products, products WHERE products.id = product_id AND user_id = ?", session["user_id"])
     return render_template("saved.html", saved=saved)
 
 
 @app.route("/profile", methods=["GET", "POST"])
 @login_required
 def profile():
-    user_rows = db.execute("SELECT * FROM users WHERE id = ?", session["user_id"])
+    user_rows = db.execute(
+        "SELECT * FROM users WHERE id = ?", session["user_id"])
     user = user_rows[0]
 
     if request.method == "POST":
@@ -305,9 +355,12 @@ def profile():
         if not timezone:
             apology("Mising timezone", 400)
 
-        db.execute("UPDATE users SET username = ? WHERE id = ?", username, user["id"])
-        db.execute("UPDATE settings SET setting_value = ? WHERE user_id = ? AND setting_name = ?", darkmode, user["id"], "darkmode")
-        db.execute("UPDATE settings SET setting_value = ? WHERE user_id = ? AND setting_name = ?", timezone, user["id"], "timezone")
+        db.execute("UPDATE users SET username = ? WHERE id = ?",
+                   username, user["id"])
+        db.execute("UPDATE settings SET setting_value = ? WHERE user_id = ? AND setting_name = ?",
+                   darkmode, user["id"], "darkmode")
+        db.execute("UPDATE settings SET setting_value = ? WHERE user_id = ? AND setting_name = ?",
+                   timezone, user["id"], "timezone")
 
         session["darkmode"] = darkmode
         session["timezone"] = timezone
@@ -316,8 +369,10 @@ def profile():
 
     else:
 
-        settings_rows = db.execute("SELECT * FROM settings WHERE user_id = ?", session["user_id"])
-        settings = {row["setting_name"]: row["setting_value"] for row in settings_rows}
+        settings_rows = db.execute(
+            "SELECT * FROM settings WHERE user_id = ?", session["user_id"])
+        settings = {row["setting_name"]: row["setting_value"]
+                    for row in settings_rows}
 
         timezones = pytz.all_timezones
         update_settings()
@@ -397,8 +452,10 @@ def register():
 def update_settings():
     if not session.get("user_id"):
         return
-    settings_rows = db.execute("SELECT * FROM settings WHERE user_id = ?", session["user_id"])
-    settings = {row["setting_name"]: row["setting_value"] for row in settings_rows}
+    settings_rows = db.execute(
+        "SELECT * FROM settings WHERE user_id = ?", session["user_id"])
+    settings = {row["setting_name"]: row["setting_value"]
+                for row in settings_rows}
 
     session["darkmode"] = settings["darkmode"]
     session["timezone"] = settings["timezone"]

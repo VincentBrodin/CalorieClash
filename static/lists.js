@@ -1,29 +1,36 @@
 
-let name_field;
-let save_name;
-let start_value = "";
 
-function main(){
-    name_field = document.getElementById("name_field");
-    name_field.addEventListener("input", name_field_update)
-    start_value = name_field.value;
-    save_name = document.getElementById("save_name");
-    save_name.style.display = "None";
+function main() {
+    const listItems = document.querySelectorAll('#product_list li');
+
+    listItems.forEach((item) => {
+        const numberInput = item.querySelector('input[type="number"]');
+        if (numberInput) {
+            numberInput.addEventListener("input", () => {
+                console.log(item.id + " / " + numberInput.value)
+                if(numberInput.value == ""){
+                    numberInput.value = "0";
+                }
+                fetch("/update_list_count", {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        "count": numberInput.value,
+                        "list_id": list_id,
+                        "product_id": item.id
+                    })
+                })
+                    .then((response) => {
+                        console.log(response)
+                        if (parseInt(numberInput.value) <= 0) {
+                            item.remove();
+                        }
+                    })
+            });
+        }
+    });
 }
-
-function add_new(){
-    console.log(new_product_id.value);
-    new_product_id.value = "";
-    let newProduct = createElement();
-}
-
-function name_field_update(){
-    if(name_field.value != start_value){
-        save_name.style.display = "Block";
-    }
-    else{
-        save_name.style.display = "None";
-    }
-}
-
 document.addEventListener("DOMContentLoaded", main);

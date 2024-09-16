@@ -1,11 +1,14 @@
 {% extends "layout.html" %}
 
 {% block title %}
-    {{ shopping_list.name }}
+{{ shopping_list.name }}
 {% endblock %}
 
 {% block head %}
-    <script src="static/lists.js"></script>
+<script>
+    const list_id = {{shopping_list.id}};
+</script>
+<script src="static/lists.js"></script>
 {% endblock %}
 
 {% block main %}
@@ -15,32 +18,38 @@
     {% endfor %}
 </datalist>
 <div class="container mt-5">
-    
+
     <!-- List Name Update Form -->
     <div class="mb-4">
         <form class="row g-2" method="post" action="/update_list_name">
             <input type="hidden" name="id" readonly value="{{shopping_list.id}}">
             <div class="col-auto flex-grow-1">
-                <input type="text" autocomplete="off" name="name" id="name_field" class="form-control" value="{{ shopping_list.name }}" placeholder="Enter name">
+                <input type="text" autocomplete="off" name="name" id="name_field" class="form-control"
+                    value="{{ shopping_list.name }}" placeholder="Enter name">
             </div>
-    <div class="col-auto">
+            <div class="col-auto">
                 <button class="btn btn-success h-100" type="submit" id="save_name">Update</button>
             </div>
         </form>
     </div>
-    
+
     <!-- Product List -->
     <div class="row mb-4">
         <div class="col-12">
             <h5 class="mb-3">Products</h5>
-            <ul class="list-group shadow-sm">
+            <ul id="product_list" class="list-group shadow-sm">
                 {% for product in products %}
-                    <li class="list-group-item d-flex justify-content-between align-items-center">
-                        {{ product.name }} ({{product.count}})
+                <li id="{{product.id}}" class="list-group-item d-flex justify-content-between align-items-center">
+                    {{ product.name }}
+                    <div class="d-flex align-items-center">
+                        <!-- Editable input for product count -->
+                        <input type="number" class="form-control form-control-sm" value="{{ product.count }}"
+                            style="width: 60px; margin-right: 10px;">
                         <button class="btn btn-danger btn-sm">Remove</button>
-                    </li>
+                    </div>
+                </li>
                 {% else %}
-                    <li class="list-group-item text-center text-muted">No products added yet.</li>
+                <li class="list-group-item text-center text-muted">No products added yet.</li>
                 {% endfor %}
             </ul>
         </div>
@@ -50,9 +59,10 @@
     <div class="row">
         <div class="col-12">
             <form class="row g-2" method="POST" action="/add_product_to_list">
-            <input type="hidden" name="id" readonly value="{{shopping_list.id}}">
+                <input type="hidden" name="id" readonly value="{{shopping_list.id}}">
                 <div class="col-auto flex-grow-1">
-                    <input type="text" autocomplete="off" id="new-product" list="saved" class="form-control" placeholder="Add new product" name="product_id">
+                    <input type="text" autocomplete="off" id="new-product" list="saved" class="form-control"
+                        placeholder="Add new product" name="product_id">
                 </div>
                 <div class="col-auto">
                     <button class="btn btn-success h-100" type="submit">Add Product</button>
@@ -62,6 +72,3 @@
     </div>
 </div>
 {% endblock %}
-
-
-
