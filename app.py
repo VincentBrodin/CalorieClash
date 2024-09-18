@@ -66,12 +66,14 @@ def update_list_count():
         return "Not your list", 403
 
     if int(count) <= 0:
+        print("Count is zero or less removing item")
         db.execute("DELETE FROM shopping_list_items WHERE shopping_list_id = ? AND product_id = ?",
                    list_id, product_id)
         return "Remove", 200
     else:
+        print(f"Changing count to {count}")
         db.execute("UPDATE shopping_list_items SET count = ? WHERE shopping_list_id = ? AND product_id = ?",
-               count, list_id, product_id)
+                   count, list_id, product_id)
     return "Good", 200
 
 
@@ -87,17 +89,61 @@ def search_barcode():
         return apology_error(product.error)
 
     is_saved = False
-    # Add search to history
     if session.get("user_id"):
+        # Add search to history
         insert_search(db, session["user_id"], barcode)
+        print("User id found :)")
+
+        # Check if the user has saved this product
         saved = db.execute(
             "SELECT * FROM user_products WHERE user_id = ? AND product_id = ?", session["user_id"], barcode)
         is_saved = len(saved) != 0
-        print("User id found :)")
+        print("Saving search")
     else:
         print("No user id")
+    comments = db.execute(
+        "SELECT * FROM product_ratings WHERE product_id = ? ORDER BY id DESC", barcode)
+
+    average_rating = 0
+    if comments:
+        for comment in comments:
+            average_rating += comment.get("rating")
+        average_rating /= len(comments)
+        round(average_rating, 1)
+    else:
+        average_rating = 0
+
     update_settings()
-    return render_template("product.html", data=product.data, is_saved=is_saved)
+    return render_template("product.html", data=product.data, is_saved=is_saved, comments=comments, average_rating=average_rating)
+
+
+@app.route("/submit_rating", methods=["POST"])
+@login_required
+def submit_rating():
+    product_id = request.form.get("product_id")
+    rating = request.form.get("rating")
+    comment = request.form.get("comment")
+
+    if not product_id:
+        return apology("Missing product id", 403)
+
+    if not rating:
+        return apology("Missing rating", 403)
+
+    try:
+        rating = int(rating)
+    except ValueError:
+        return apology("Rating is not an integer", 403)
+
+    if 0 > rating or rating > 5:
+        return apology("Rating is not 0-5", 403)
+
+    has_comment = comment != ""
+    user_id = session["user_id"]
+
+    db.execute("INSERT INTO product_ratings (user_id, product_id, rating, has_comment, comment) VALUES (?, ?, ?, ?, ?)",
+               user_id, product_id, rating, has_comment, comment)
+    return redirect(f"/search_barcode?barcode={product_id}")
 
 
 @app.route("/compare_products", methods=["GET"])
@@ -134,7 +180,6 @@ def compare_products():
 
     # ---return information---
     update_settings()
-    # if type
     return render_template("compare.html", data_a=product_a.data, is_saved_a=is_saved_a, data_b=product_b.data, is_saved_b=is_saved_b)
 
 
@@ -450,6 +495,9 @@ def register():
 
 
 def update_settings():
+    """
+    Makes sure that the users has the latest settings.
+    """
     if not session.get("user_id"):
         return
     settings_rows = db.execute(

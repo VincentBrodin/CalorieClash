@@ -29,6 +29,10 @@ def get_product_url_barcode(barcode):
 
 
 def get_product(barcode):
+    """
+    Takes the barcode and first checks if the barcode exists in the local db,
+    if not it will check if the barcode exists in the API, if not then ERROR
+    """
     product = BarcodeRequest()
     rows = db.execute("SELECT * FROM products WHERE id = ?", barcode)
     if len(rows) == 0:
@@ -107,23 +111,28 @@ def validate_data(data):
 
 
 def insert_product(db, data):
-    db.execute("INSERT INTO products (id, name, grade, score, kcal_100g, fat_100g, proteins_100g, salt_100g, sugars_100g, sodium_100g) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", data['id'], data['name'], data['grade'], data['score'], data['kcal_100g'], data['fat_100g'], data['proteins_100g'], data['salt_100g'], data['sugars_100g'], data['sodium_100g'])
+    db.execute("INSERT INTO products (id, name, grade, score, kcal_100g, fat_100g, proteins_100g, salt_100g, sugars_100g, sodium_100g) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+               data['id'], data['name'], data['grade'], data['score'], data['kcal_100g'], data['fat_100g'], data['proteins_100g'], data['salt_100g'], data['sugars_100g'], data['sodium_100g'])
 
 
 def insert_search(db, user_id, product_id):
-    db.execute("INSERT INTO user_searches (user_id, product_id) VALUES (?, ?)", user_id, product_id)
+    db.execute(
+        "INSERT INTO user_searches (user_id, product_id) VALUES (?, ?)", user_id, product_id)
 
 
 def insert_settings(db, user_id, setting_name, setting_value):
-    db.execute("INSERT INTO settings (user_id, setting_name, setting_value) VALUES (?, ?, ?)", user_id, setting_name, setting_value)
+    db.execute("INSERT INTO settings (user_id, setting_name, setting_value) VALUES (?, ?, ?)",
+               user_id, setting_name, setting_value)
 
 
 def insert_user_product(db, user_id, product_id):
-    db.execute("INSERT INTO user_products (user_id, product_id) VALUES (?, ?)", user_id, product_id)
+    db.execute(
+        "INSERT INTO user_products (user_id, product_id) VALUES (?, ?)", user_id, product_id)
 
 
 def insert_new_list(db, user_id):
-    list_id = db.execute("INSERT INTO shopping_lists (user_id) VALUES (?)", user_id)
+    list_id = db.execute(
+        "INSERT INTO shopping_lists (user_id) VALUES (?)", user_id)
     return list_id
 
 
