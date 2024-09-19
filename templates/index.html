@@ -4,35 +4,128 @@
     Home
 {% endblock %}
 
+{% block head %}
+    <script src="https://unpkg.com/html5-qrcode@2.0.9/dist/html5-qrcode.min.js" async></script>
+{% endblock %}
+
 {% block main %}
     <datalist id="saved">
         {% for save in saved %}
         <option value="{{save.id}}">{{save.name}}</option>
         {% endfor %}
     </datalist>
-<div class="container d-flex flex-column justify-content-center align-items-center mt-5">
-    <!--Search Products-->
-    <h2 class="mb-4 text-center">Find Product</h2>
-    <form action="/search_barcode" method="get" class="w-100" style="max-width: 500px;">
-        <div class="form-group mb-3">
-            <label for="barcode" class="form-label">Barcode:</label>
-            <input type="text" list="saved" name="barcode" class="form-control" required placeholder="Barcode" autofocus autocomplete="off">
+    <div class="container d-flex flex-column justify-content-center align-items-center mt-5">
+        <!--Search Products-->
+        <h2 class="mb-4 text-center">Find Product</h2>
+        <form action="/search_barcode" method="get" class="w-100" style="max-width: 500px;">
+            <div class="input-group mb-3">
+                <input type="text" list="saved" id="barcode" name="barcode" class="form-control" required placeholder="Barcode" autofocus autocomplete="off">
+                <button type="button" class="btn btn-outline-primary" onclick="startQrScanner('barcode')">
+                    <i class="bi bi-camera"></i> Scan
+                </button>
+            </div>
+            <button type="submit" class="btn btn-success w-100">Search</button>
+        </form>
+
+        <!--Compare Products-->
+        <h2 class="mt-4 text-center">Compare Products</h2>
+        <form action="/compare_products" method="get" class="w-100" style="max-width: 500px;">
+            <div class="input-group mb-3">
+                <input type="text" list="saved" id="barcode_a" name="barcode_a" required class="form-control" placeholder="Enter Barcode A" autocomplete="off">
+                <button type="button" class="btn btn-outline-primary" onclick="startQrScanner('barcode_a')">
+                    <i class="bi bi-camera"></i> Scan
+                </button>
+            </div>
+            <div class="input-group mb-3">
+                <input type="text" list="saved" id="barcode_b" name="barcode_b" required class="form-control" placeholder="Enter Barcode B" autocomplete="off">
+                <button type="button" class="btn btn-outline-primary" onclick="startQrScanner('barcode_b')">
+                    <i class="bi bi-camera"></i> Scan
+                </button>
+            </div>
+            <button type="submit" class="btn btn-success w-100">Compare</button>
+        </form>
+
+        <div id="qr-reader-container" class="mt-3">
+            <div id="qr-reader"></div>
+            <p id="qr-reader-error" class="text-danger d-none mt-2"></p> <!-- Error message -->
         </div>
-        <button type="submit" class="btn btn-success btn-block">Search</button>
-    </form>
-    <!--Compare Products-->
-    <h2 class="mb-4 text-center">Compare Products</h2>
-    <form action="/compare_products" method="get" class="w-100" style="max-width: 500px;">
-        <div class="form-group mb-3">
-            <label for="barcode_a" class="form-label">Barcode A:</label>
-            <input type="text" list="saved" id="barcode_a" name="barcode_a" required class="form-control" placeholder="Enter Barcode A" autofocus autocomplete="off">
-        </div>
-        <div class="form-group mb-3">
-            <label for="barcode_b" class="form-label">Barcode B:</label>
-            <input type="text" list="saved" id="barcode_b" name="barcode_b" required class="form-control" placeholder="Enter Barcode B" autofocus autocomplete="off">
-        </div>
-        <button type="submit" class="btn btn-success btn-block">Search</button>
-    </form>
-</div>
+    </div>
+
+<script>
+    let qrScannerInstance;
+    let errorTimeout;
+    let isScanning = false;
+
+    function initializeQrScanner() {
+        if (qrScannerInstance) return;
+
+        qrScannerInstance = new Html5QrcodeScanner(
+            "qr-reader", {
+                fps: 20, 
+                qrbox: { width: 300, height: 300 }, 
+                aspectRatio: 1.0,
+                disableFlip: false,
+                experimentalFeatures: {
+                    useBarCodeDetectorIfSupported: true
+                },
+                videoConstraints: {
+                    facingMode: "environment",  // Use the back camera for QR scanning
+                    width: { ideal: 300 },
+                    height: { ideal: 300 }
+                }
+            }
+        );
+    }
+
+    function startQrScanner(targetInputId) {
+        if (isScanning) return;
+        isScanning = true;
+
+        const inputField = document.getElementById(targetInputId);
+
+        document.getElementById('qr-reader-container').classList.remove('d-none');
+
+        initializeQrScanner();
+
+        qrScannerInstance.render(
+            (decodedText) => {
+                inputField.value = decodedText;
+                clearTimeout(errorTimeout);
+                hideErrorMessage();
+                stopQrScanner();
+            },
+            (error) => {
+                clearTimeout(errorTimeout);
+                errorTimeout = setTimeout(() => {
+                    showErrorMessage("Unable to detect QR code, please try again.");
+                }, 1000);             }
+        );
+    }
+
+    function stopQrScanner() {
+        if (qrScannerInstance) {
+            qrScannerInstance.clear().then(() => {
+                document.getElementById("qr-reader").innerHTML = "";
+                document.getElementById('qr-reader-container').classList.add('d-none');
+                isScanning = false;
+                document.getElementById('loading-spinner').style.display = "none";
+            }).catch((error) => {
+                    console.error("Failed to clear QR scanner.", error);
+                });
+        }
+    }
+
+    function showErrorMessage(message) {
+        const errorElem = document.getElementById('qr-reader-error');
+        errorElem.innerText = message;
+        errorElem.classList.remove('d-none');
+        stopQrScanner();
+    }
+
+    function hideErrorMessage() {
+        const errorElem = document.getElementById('qr-reader-error');
+        errorElem.classList.add('d-none');
+    }
+</script>
 {% endblock %}
 

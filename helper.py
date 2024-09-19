@@ -49,7 +49,7 @@ def get_product(barcode):
 
         if not validate_data(data):
             product.has_error = True
-            product.error.status = 404
+            product.error.status = 403
             product.error.message = "Product is missing data"
             return product
 
@@ -194,3 +194,7 @@ def login_required(f):
         return f(*args, **kwargs)
 
     return decorated_function
+
+def get_saved(user_id):
+    return db.execute("SELECT DISTINCT p.id, p.name FROM products p JOIN (SELECT product_id FROM user_searches WHERE user_id = ? UNION SELECT product_id FROM user_products WHERE user_id = ?) combined ON p.id = combined.product_id", user_id, user_id)
+

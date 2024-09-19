@@ -7,7 +7,7 @@ import pytz
 from helper import (
     apology, fix_time, login_required, insert_search, insert_settings,
     sort_by_search_time, insert_user_product, insert_new_list, get_product,
-    apology_error
+    apology_error, get_saved
 )
 
 app = Flask(__name__)
@@ -41,8 +41,7 @@ def index():
     saved = []
     # Grab all users saved products to show as autocomplete
     if session.get("user_id"):
-        saved = db.execute(
-            "SELECT * FROM user_products, products WHERE user_id = ? AND product_id = id", session["user_id"])
+        saved = get_saved(session["user_id"])
     return render_template("index.html", saved=saved)
 
 
@@ -159,6 +158,7 @@ def compare_products():
 
     is_saved_a = False
     if session.get("user_id"):
+        insert_search(db, session["user_id"], barcode_a)
         saved = db.execute(
             "SELECT * FROM user_products WHERE user_id = ? AND product_id = ?", session["user_id"], barcode_a)
         is_saved_a = len(saved) != 0
@@ -174,6 +174,7 @@ def compare_products():
 
     is_saved_b = False
     if session.get("user_id"):
+        insert_search(db, session["user_id"], barcode_b)
         saved = db.execute(
             "SELECT * FROM user_products WHERE user_id = ? AND product_id = ?", session["user_id"], barcode_b)
         is_saved_b = len(saved) != 0
@@ -205,11 +206,9 @@ def shopping_list():
 
     saved = []
     if session.get("user_id"):
-        saved = db.execute(
-            "SELECT * FROM user_products, products WHERE user_id = ? AND product_id = id", session["user_id"])
+        saved = get_saved(session["user_id"])
 
     return render_template("list.html", shopping_list=shopping_list, products=products, saved=saved)
-
 
 # Grab all users saved products to show as autocomplete
 @app.route("/add_product_to_list", methods=["POST"])
