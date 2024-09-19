@@ -1,5 +1,5 @@
 # CalorieClash
-#### Video Demo: <URL HERE>
+#### Video Demo: https://youtu.be/tacyYy510rA
 #### Description:
 Web application built with Flask (JS, Py, HTML, CSS, SQL)
 This is my final project for CS50.
